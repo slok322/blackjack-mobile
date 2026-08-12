@@ -76,6 +76,25 @@
   }
   .bankroll .amt{ color: var(--gold-soft); font-weight:700; transition: color .2s; }
   .bankroll .amt.flash{ color: var(--green-win); }
+  .menu-wrap{ position:relative; }
+  #menuBtn{ font-size:16px; }
+  .menu-dropdown{
+    position:absolute; top:calc(100% + 8px); right:0; min-width:190px;
+    background: linear-gradient(180deg, var(--felt-light), var(--felt));
+    border:1px solid rgba(212,175,55,.4); border-radius:14px;
+    box-shadow:0 10px 30px rgba(0,0,0,.5);
+    padding:6px; display:flex; flex-direction:column; gap:2px;
+    opacity:0; visibility:hidden; transform:translateY(-6px);
+    transition: opacity .15s ease, transform .15s ease, visibility .15s;
+    z-index:20;
+  }
+  .menu-dropdown.open{ opacity:1; visibility:visible; transform:translateY(0); }
+  .menu-dropdown .icon-btn{
+    width:auto; height:auto; border-radius:9px; justify-content:flex-start;
+    gap:9px; padding:9px 10px; font-size:13px; background:transparent; border:1px solid transparent;
+  }
+  .menu-dropdown .icon-btn:active{ background:rgba(0,0,0,.3); }
+  .menu-dropdown .icon-btn span{ font-size:13px; font-family:'Courier New',monospace; color:var(--gold-soft); }
   @media (max-width: 420px){
     .brand{ font-size:16px; }
     .level-badge{ font-size:10px; padding:3px 7px; margin-left:5px; }
@@ -406,16 +425,21 @@
   <header>
     <div style="display:flex; align-items:center;">
       <div class="brand"><span class="suit">♠</span>21 <span class="suit">♥</span></div>
-      <div class="level-badge" id="levelBadge" title="Niveau joueur"><span class="lb-icon" id="levelBadgeIcon">🃏</span> Niv. <span id="levelBadgeNum">1</span></div>
     </div>
     <div class="header-right">
-      <div class="icon-btn" id="soundBtn">🔊</div>
-      <div class="icon-btn" id="statsBtn">📊</div>
-      <div class="icon-btn" id="achBtn" title="Progression">🏆</div>
-      <div class="icon-btn" id="gamesMenuBtn">🎰</div>
-      <div class="icon-btn" id="accountBtn" title="Mon compte">👤</div>
-      <div class="icon-btn" id="helpBtn" title="Comment jouer">❓</div>
       <div class="bankroll">💰 <span class="amt" id="bankAmt">500</span></div>
+      <div class="level-badge" id="levelBadge" title="Niveau joueur"><span class="lb-icon" id="levelBadgeIcon">🃏</span> Niv. <span id="levelBadgeNum">1</span></div>
+      <div class="menu-wrap">
+        <div class="icon-btn" id="menuBtn" title="Menu">☰</div>
+        <div class="menu-dropdown" id="menuDropdown">
+          <div class="icon-btn" id="soundBtn"><span id="soundIcon">🔊</span> <span>Son</span></div>
+          <div class="icon-btn" id="statsBtn">📊 <span>Statistiques</span></div>
+          <div class="icon-btn" id="achBtn" title="Progression">🏆 <span>Progression</span></div>
+          <div class="icon-btn" id="gamesMenuBtn">🎰 <span>Mini-jeux</span></div>
+          <div class="icon-btn" id="accountBtn" title="Mon compte"><span id="accountIcon">👤</span> <span>Mon compte</span></div>
+          <div class="icon-btn" id="helpBtn" title="Comment jouer">❓ <span>Comment jouer</span></div>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -996,13 +1020,6 @@
     dailyClaimBtn.dataset.day = dayIndex;
     dailyOverlay.classList.add('show');
   }
-  dailyClaimBtn.addEventListener('click', () => {
-    const dayIndex = Number(dailyClaimBtn.dataset.day || 0);
-    setBank(bank + DAILY_REWARDS[dayIndex], true);
-    addXp(DAILY_XP[dayIndex]);
-    checkAchievements();
-    dailyOverlay.classList.remove('show');
-  });
   function adjustTable(){
     while(currentTableIdx > 0 && bank < TABLES[currentTableIdx].min){ currentTableIdx--; }
     if(isRuined()) currentTableIdx = 0;
@@ -1119,12 +1136,20 @@
   const hiloHigherBtn = document.getElementById('hiloHigherBtn');
   const hiloCashoutBtn = document.getElementById('hiloCashoutBtn');
   const soundBtn = document.getElementById('soundBtn');
+  const soundIcon = document.getElementById('soundIcon');
   const statsBtn = document.getElementById('statsBtn');
   const dailyOverlay = document.getElementById('dailyOverlay');
   const dailyStreakLine = document.getElementById('dailyStreakLine');
   const dailyDots = document.getElementById('dailyDots');
   const dailyRewardLine = document.getElementById('dailyRewardLine');
   const dailyClaimBtn = document.getElementById('dailyClaimBtn');
+  dailyClaimBtn.addEventListener('click', () => {
+    const dayIndex = Number(dailyClaimBtn.dataset.day || 0);
+    setBank(bank + DAILY_REWARDS[dayIndex], true);
+    addXp(DAILY_XP[dayIndex]);
+    checkAchievements();
+    dailyOverlay.classList.remove('show');
+  });
   const statsOverlay = document.getElementById('statsOverlay');
   const closeStatsBtn = document.getElementById('closeStatsBtn');
 
@@ -1134,6 +1159,7 @@
   let authMode = 'signup';
 
   const accountBtn = document.getElementById('accountBtn');
+  const accountIcon = document.getElementById('accountIcon');
   const authOverlay = document.getElementById('authOverlay');
   const authLoggedOut = document.getElementById('authLoggedOut');
   const authLoggedIn = document.getElementById('authLoggedIn');
@@ -1165,13 +1191,13 @@
 
   function updateAccountUI(){
     if(currentUser){
-      accountBtn.textContent = '🟢';
+      accountIcon.textContent = '🟢';
       authLoggedOut.classList.add('auth-hidden');
       authLoggedIn.classList.remove('auth-hidden');
       accountLine.textContent = `Connecté : ${currentUser.displayName || 'Joueur'}`;
       authSub.textContent = 'Ta banque et tes stats sont sauvegardées sur ce compte.';
     } else {
-      accountBtn.textContent = '👤';
+      accountIcon.textContent = '👤';
       authLoggedOut.classList.remove('auth-hidden');
       authLoggedIn.classList.add('auth-hidden');
       authSub.textContent = "Crée un compte pour garder ta banque et tes stats, même si tu changes d'appareil.";
@@ -1283,7 +1309,7 @@
         safeSet('bj_purchased_tiers', Array.from(purchasedTiers)); safeSet('bj_daily_login', dailyLogin);
         adjustTable();
         bankAmtEl.textContent = bank;
-        soundBtn.textContent = soundOn ? '🔊' : '🔇';
+        soundIcon.textContent = soundOn ? '🔊' : '🔇';
         renderChips();
         renderTableLabel();
         applyEquippedCosmetic();
@@ -1598,6 +1624,20 @@
     gamesMenuOverlay.classList.add('show');
   }
   gamesMenuBtn.addEventListener('click', openGamesMenu);
+
+  // ---------- menu déroulant du header ----------
+  const menuBtn = document.getElementById('menuBtn');
+  const menuDropdown = document.getElementById('menuDropdown');
+  menuBtn.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    menuDropdown.classList.toggle('open');
+  });
+  menuDropdown.addEventListener('click', (e)=>{
+    if(e.target.closest('.icon-btn')) menuDropdown.classList.remove('open');
+  });
+  document.addEventListener('click', (e)=>{
+    if(!menuDropdown.contains(e.target) && e.target !== menuBtn) menuDropdown.classList.remove('open');
+  });
   closeGamesMenuBtn.addEventListener('click', () => gamesMenuOverlay.classList.remove('show'));
   openHiloBtn.addEventListener('click', () => { gamesMenuOverlay.classList.remove('show'); openHilo(); });
   openHiloBtn2.addEventListener('click', () => { gamesMenuOverlay.classList.remove('show'); openHilo(); });
@@ -1955,7 +1995,7 @@
 
   soundBtn.addEventListener('click', () => {
     soundOn = !soundOn;
-    soundBtn.textContent = soundOn ? '🔊' : '🔇';
+    soundIcon.textContent = soundOn ? '🔊' : '🔇';
     safeSet('bj_sound', soundOn);
     scheduleCloudSave();
     if(soundOn){ ensureAudio(); sfxChip(); }
@@ -2387,7 +2427,7 @@
   loadAll();
   adjustTable();
   bankAmtEl.textContent = bank;
-  soundBtn.textContent = soundOn ? '🔊' : '🔇';
+  soundIcon.textContent = soundOn ? '🔊' : '🔇';
   renderChips();
   renderTableLabel();
   applyEquippedCosmetic();
