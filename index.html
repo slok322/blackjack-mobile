@@ -47,35 +47,42 @@
     pointer-events:none;
   }
   header{
-    display:flex; align-items:center; justify-content:space-between;
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; row-gap:6px;
     padding: max(10px, env(safe-area-inset-top)) 14px 6px;
     z-index:6;
   }
   .brand{
     font-family: 'Georgia', serif; font-weight:700; font-size:19px; letter-spacing:1px;
-    color: var(--gold-soft); display:flex; align-items:center; gap:5px;
+    color: var(--gold-soft); display:flex; align-items:center; gap:5px; flex-shrink:0;
   }
   .brand .suit{ color: var(--red); font-size:15px; }
   .level-badge{
     display:flex; align-items:center; gap:4px; font-family:'Courier New',monospace; font-size:11.5px; font-weight:700;
     background: rgba(0,0,0,.3); border:1px solid rgba(212,175,55,.4); color: var(--gold-soft);
-    padding:4px 9px; border-radius:20px; cursor:pointer; margin-left:8px;
+    padding:4px 9px; border-radius:20px; cursor:pointer; margin-left:8px; flex-shrink:0; white-space:nowrap;
   }
   .level-badge .lb-icon{ font-size:12.5px; }
-  .header-right{ display:flex; align-items:center; gap:6px; }
+  .header-right{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
   .icon-btn{
-    width:32px; height:32px; border-radius:50%;
+    width:32px; height:32px; border-radius:50%; flex-shrink:0;
     background: rgba(0,0,0,.3); border:1px solid rgba(212,175,55,.4);
     color: var(--gold-soft); font-size:14px;
     display:flex; align-items:center; justify-content:center; cursor:pointer;
   }
   .bankroll{
-    font-family: 'Courier New', monospace; font-size:13px;
+    font-family: 'Courier New', monospace; font-size:13px; flex-shrink:0; white-space:nowrap;
     background: rgba(0,0,0,.3); border:1px solid rgba(212,175,55,.4);
     padding:6px 11px; border-radius:20px; display:flex; align-items:center; gap:5px;
   }
   .bankroll .amt{ color: var(--gold-soft); font-weight:700; transition: color .2s; }
   .bankroll .amt.flash{ color: var(--green-win); }
+  @media (max-width: 420px){
+    .brand{ font-size:16px; }
+    .level-badge{ font-size:10px; padding:3px 7px; margin-left:5px; }
+    .icon-btn{ width:27px; height:27px; font-size:12px; }
+    .bankroll{ font-size:11.5px; padding:5px 9px; }
+    .header-right{ gap:4px; }
+  }
 
   #table{
     flex:1; display:flex; flex-direction:column; justify-content:space-between;
@@ -383,6 +390,7 @@
   .tuto-dots{ display:flex; justify-content:center; gap:6px; margin:14px 0 4px; }
   .tuto-dot{ width:7px; height:7px; border-radius:50%; background:rgba(242,234,214,.25); }
   .tuto-dot.active{ background:var(--gold-soft); width:18px; border-radius:4px; }
+  .tuto-dot.done{ background:var(--green-win); }
   .tuto-skip{ text-align:center; font-size:11.5px; color:rgba(242,234,214,.5); margin-top:10px; text-decoration:underline; cursor:pointer; }
 
   @media (max-height: 640px){
@@ -569,7 +577,7 @@
           <div class="quest-bar-wrap"><div class="quest-bar" id="lhBar" style="width:0%;"></div></div>
           <div class="lh-xp" id="lhXp">0 / 120 XP</div>
         </div>
-        <p style="font-size:11.5px; color:rgba(242,234,214,.6); margin:0 0 10px;">Gagnez de l'XP en jouant des mains, en réussissant des quêtes et des succès. Chaque palier débloque un nouveau look à porter.</p>
+        <p style="font-size:11.5px; color:rgba(242,234,214,.6); margin:0 0 10px;">Gagnez de l'XP en jouant des mains, en réussissant des quêtes et des succès. Chaque palier débloque un nouveau look — ou achetez-le directement avec vos jetons.</p>
         <div class="tier-list" id="tierList"></div>
       </div>
 
@@ -638,6 +646,18 @@
         <button class="btn-primary" id="tutoNextBtn">Suivant</button>
       </div>
       <div class="tuto-skip" id="tutoSkipBtn">Passer le tutoriel</div>
+    </div>
+  </div>
+
+  <div class="overlay" id="dailyOverlay">
+    <div class="overlay-card">
+      <h3>🎁 Connexion quotidienne</h3>
+      <p id="dailyStreakLine">Série : 1 jour</p>
+      <div class="tuto-dots" id="dailyDots"></div>
+      <div class="hilo-pot" id="dailyRewardLine">+50 jetons</div>
+      <div class="overlay-actions" style="margin-top:8px;">
+        <button class="btn-primary" id="dailyClaimBtn" style="flex:1;">Récupérer</button>
+      </div>
     </div>
   </div>
 
@@ -711,32 +731,39 @@
     { level:1,  title:'Débutant',          badge:'🃏',
       cardBack:{ a:'var(--felt-light)', b:'var(--felt)', border:'var(--gold)', symbol:'♠', color:'var(--gold-soft)' },
       chips:{ c1:['#4a8f5a','#1e5c30'], c2:['#5a8fd4','#2a4f8f'], c3:['#3a3a3a','#111111'], c4:['#c94a4a','#7a1f1f'] } },
-    { level:5,  title:'Joueur confirmé',   badge:'♦️',
+    { level:5,  title:'Joueur confirmé',   badge:'♦️', cost:800,
       cardBack:{ a:'#1d3b63', b:'#0c1f38', border:'#5a8fd4', symbol:'♦', color:'#bcd9ff' },
       chips:{ c1:['#3a7fae','#153a54'], c2:['#5aa8d4','#1f5c82'], c3:['#274a63','#0d1f2c'], c4:['#7ec8e3','#2c5c73'] } },
-    { level:10, title:'Requin de table',   badge:'🦈',
+    { level:10, title:'Requin de table',   badge:'🦈', cost:2500,
       cardBack:{ a:'#5c1414', b:'#2b0808', border:'#c94a4a', symbol:'♥', color:'#ffb3b3' },
       chips:{ c1:['#a83a3a','#5c1717'], c2:['#d45a5a','#822a2a'], c3:['#632727','#2c0d0d'], c4:['#e37e7e','#732c2c'] } },
-    { level:15, title:'Grand Joueur',      badge:'🎩',
+    { level:15, title:'Grand Joueur',      badge:'🎩', cost:6000,
       cardBack:{ a:'#2a2a2a', b:'#0a0a0a', border:'#9a9a9a', symbol:'♣', color:'#e5e5e5' },
       chips:{ c1:['#6b6b6b','#2c2c2c'], c2:['#8f8f8f','#3f3f3f'], c3:['#4a4a4a','#151515'], c4:['#c9c9c9','#5a5a5a'] } },
-    { level:20, title:'Maître Croupier',   badge:'🥂',
+    { level:20, title:'Maître Croupier',   badge:'🥂', cost:15000,
       cardBack:{ a:'#3a0a4a', b:'#180320', border:'#b06fe0', symbol:'♠', color:'#e6c3ff' },
       chips:{ c1:['#7a3aae','#3a1354'], c2:['#a85ad4','#5c1f82'], c3:['#4a2763','#1f0d2c'], c4:['#c37ee3','#732c73'] } },
-    { level:25, title:'VIP',               badge:'💎',
+    { level:25, title:'VIP',               badge:'💎', cost:40000,
       cardBack:{ a:'#0a3a3a', b:'#031616', border:'#4ae0e0', symbol:'♦', color:'#c3fff9' },
       chips:{ c1:['#2a9a8f','#0d4a44'], c2:['#4ac9c0','#1f6b64'], c3:['#0e4d47','#031e1b'], c4:['#8ff0e6','#2c7369'] } },
-    { level:35, title:'Icône du Casino',   badge:'👑',
+    { level:35, title:'Icône du Casino',   badge:'👑', cost:120000,
       cardBack:{ a:'#4a3608', b:'#1f1502', border:'#ffd75e', symbol:'★', color:'#fff2c2' },
       chips:{ c1:['#c9982e','#6b4f0d'], c2:['#e0b84a','#8f6d1f'], c3:['#6b4f14','#2c1f05'], c4:['#ffe08a','#a67c2c'] } },
-    { level:50, title:'Légende Vivante',   badge:'🌟',
+    { level:50, title:'Légende Vivante',   badge:'🌟', cost:400000,
       cardBack:{ a:'#3a0505', b:'#170202', border:'#ffcf4a', symbol:'👑', color:'#ffe9a8' },
       chips:{ c1:['#a80f0f','#4a0505'], c2:['#e0392f','#821f1a'], c3:['#4d0e0e','#1e0303'], c4:['#ff8f4a','#a63c2c'] } },
   ];
+  let purchasedTiers = new Set();
   function tierFor(lvl){ return LEVEL_TIERS.find(t=>t.level===lvl); }
-  function unlockedTiers(){ return LEVEL_TIERS.filter(t=>t.level<=level); }
+  function tierUnlocked(lvl){ return level >= lvl || purchasedTiers.has(lvl); }
+  function unlockedTiers(){ return LEVEL_TIERS.filter(t=>tierUnlocked(t.level)); }
   function currentTitleTier(){ const u = unlockedTiers(); return u[u.length-1]; }
   function xpToNext(lvl){ return 120 + (lvl-1)*35; }
+
+  // ---------- connexion quotidienne ----------
+  let dailyLogin = { lastDate:null, streak:0, bestStreak:0 };
+  const DAILY_REWARDS = [50,75,110,150,200,300,500];
+  const DAILY_XP =      [10,15,20,25,30,40,60];
 
   const TABLES = [
     { name:'Table Débutant', threshold:0,        min:5,      max:200,     chips:[5,25,50,100],           felt:['#051d15','#0c3d2b','#16603f'] },
@@ -776,6 +803,9 @@
     { id:'bank10m',      icon:'👑', name:'Légende du casino', desc:'Atteignez 10 000 000 de jetons.',        test:()=> bank >= 10000000 },
     { id:'bigwin',       icon:'🚀', name:'Gros coup',         desc:'Gagnez 1 000 jetons ou plus sur une seule main.', test:()=> stats.bestWin >= 1000 },
     { id:'ruined',       icon:'💀', name:'Fond du gouffre',   desc:'Faites faillite… puis relevez-vous.',    test:()=> stats.hands >= 1 && bank < TABLES[0].min },
+    { id:'legend_tier',  icon:'🌟', name:'Statut légendaire', desc:'Portez le palier cosmétique Légende Vivante.', test:()=> equippedTier === 50 },
+    { id:'shopper',      icon:'🛍️', name:'Client VIP',        desc:'Achetez un palier cosmétique dans la boutique.', test:()=> purchasedTiers.size >= 1 },
+    { id:'week_streak',  icon:'📅', name:'Fidèle au poste',   desc:'Connectez-vous 7 jours d\'affilée.',     test:()=> dailyLogin.bestStreak >= 7 },
   ];
 
   function checkAchievements(){
@@ -834,12 +864,16 @@
     xp = safeGet('bj_xp', 0);
     equippedTier = safeGet('bj_equipped_tier', 1);
     if(!tierFor(equippedTier)) equippedTier = 1;
+    purchasedTiers = new Set(safeGet('bj_purchased_tiers', []));
+    dailyLogin = safeGet('bj_daily_login', dailyLogin);
   }
   function saveBank(){ safeSet('bj_bank', bank); scheduleCloudSave(); checkAchievements(); }
   function saveStats(){ safeSet('bj_stats', stats); scheduleCloudSave(); checkAchievements(); }
   function saveTable(){ safeSet('bj_table', currentTableIdx); scheduleCloudSave(); }
   function saveLevel(){ safeSet('bj_level', level); safeSet('bj_xp', xp); scheduleCloudSave(); }
   function saveEquippedTier(){ safeSet('bj_equipped_tier', equippedTier); scheduleCloudSave(); }
+  function savePurchasedTiers(){ safeSet('bj_purchased_tiers', Array.from(purchasedTiers)); scheduleCloudSave(); checkAchievements(); }
+  function saveDailyLogin(){ safeSet('bj_daily_login', dailyLogin); scheduleCloudSave(); }
 
   function applyEquippedCosmetic(){
     const tier = tierFor(equippedTier) || LEVEL_TIERS[0];
@@ -884,11 +918,23 @@
   }
 
   function equipTier(lvl){
-    if(lvl > level) return;
+    if(!tierUnlocked(lvl)) return;
     equippedTier = lvl;
     saveEquippedTier();
     applyEquippedCosmetic();
     renderLevelBadge();
+    renderLevelPanel();
+  }
+
+  function buyTier(lvl){
+    const t = tierFor(lvl);
+    if(!t || !t.cost || tierUnlocked(lvl) || bank < t.cost) return;
+    setBank(bank - t.cost, false);
+    purchasedTiers.add(lvl);
+    savePurchasedTiers();
+    ensureAudio(); sfxWin();
+    showAchToast({ icon:t.badge, name:`Palier acheté : ${t.title}` });
+    adjustTable(); renderChips(); renderTableLabel(); updateBetUI();
     renderLevelPanel();
   }
 
@@ -901,25 +947,62 @@
     lhXp.textContent = `${xp} / ${need} XP`;
     tierList.innerHTML = '';
     LEVEL_TIERS.forEach(t => {
-      const unlocked = level >= t.level;
+      const unlocked = tierUnlocked(t.level);
       const row = document.createElement('div');
       row.className = 'tier-item' + (unlocked?'':' locked') + (equippedTier===t.level?' equipped':'');
+      let btnHtml = '';
+      if(unlocked){
+        btnHtml = `<button class="tier-equip-btn" ${equippedTier===t.level?'disabled':''} data-act="equip" data-lvl="${t.level}">${equippedTier===t.level?'Porté':'Porter'}</button>`;
+      } else if(t.cost){
+        const afford = bank >= t.cost;
+        btnHtml = `<button class="tier-equip-btn" ${afford?'':'disabled'} data-act="buy" data-lvl="${t.level}">Acheter ${fmtNum(t.cost)}</button>`;
+      }
       row.innerHTML = `
         <div class="tier-icon">${unlocked ? t.badge : '🔒'}</div>
         <div style="flex:1;">
           <div class="tier-name">${t.title}</div>
-          <div class="tier-desc">${unlocked ? 'Niveau '+t.level : 'Débloqué au niveau '+t.level}</div>
+          <div class="tier-desc">${unlocked ? 'Niveau '+t.level : 'Niveau '+t.level+' ou achat direct'}</div>
         </div>
-        ${unlocked ? `<button class="tier-equip-btn" ${equippedTier===t.level?'disabled':''} data-lvl="${t.level}">${equippedTier===t.level?'Porté':'Porter'}</button>` : ''}
+        ${btnHtml}
       `;
-      if(unlocked){
-        row.querySelector('.tier-equip-btn').addEventListener('click', () => equipTier(t.level));
+      const btn = row.querySelector('.tier-equip-btn');
+      if(btn){
+        btn.addEventListener('click', () => {
+          if(btn.dataset.act==='equip') equipTier(t.level);
+          else buyTier(t.level);
+        });
       }
       tierList.appendChild(row);
     });
   }
 
   function isRuined(){ return bank < TABLES[0].min; }
+
+  function checkDailyLogin(){
+    const today = todayStr();
+    if(dailyLogin.lastDate === today) return;
+    const yesterday = new Date(Date.now()-86400000).toISOString().slice(0,10);
+    dailyLogin.streak = (dailyLogin.lastDate === yesterday) ? dailyLogin.streak + 1 : 1;
+    if(dailyLogin.streak > dailyLogin.bestStreak) dailyLogin.bestStreak = dailyLogin.streak;
+    dailyLogin.lastDate = today;
+    saveDailyLogin();
+    openDailyLoginOverlay();
+  }
+  function openDailyLoginOverlay(){
+    const dayIndex = (dailyLogin.streak - 1) % 7;
+    dailyStreakLine.textContent = `Série : ${dailyLogin.streak} jour${dailyLogin.streak>1?'s':''}`;
+    dailyDots.innerHTML = DAILY_REWARDS.map((r,i)=>`<div class="tuto-dot${i===dayIndex?' active':(i<dayIndex?' done':'')}"></div>`).join('');
+    dailyRewardLine.textContent = `+${fmtNum(DAILY_REWARDS[dayIndex])} jetons · +${DAILY_XP[dayIndex]} XP`;
+    dailyClaimBtn.dataset.day = dayIndex;
+    dailyOverlay.classList.add('show');
+  }
+  dailyClaimBtn.addEventListener('click', () => {
+    const dayIndex = Number(dailyClaimBtn.dataset.day || 0);
+    setBank(bank + DAILY_REWARDS[dayIndex], true);
+    addXp(DAILY_XP[dayIndex]);
+    checkAchievements();
+    dailyOverlay.classList.remove('show');
+  });
   function adjustTable(){
     while(currentTableIdx > 0 && bank < TABLES[currentTableIdx].min){ currentTableIdx--; }
     if(isRuined()) currentTableIdx = 0;
@@ -1037,6 +1120,11 @@
   const hiloCashoutBtn = document.getElementById('hiloCashoutBtn');
   const soundBtn = document.getElementById('soundBtn');
   const statsBtn = document.getElementById('statsBtn');
+  const dailyOverlay = document.getElementById('dailyOverlay');
+  const dailyStreakLine = document.getElementById('dailyStreakLine');
+  const dailyDots = document.getElementById('dailyDots');
+  const dailyRewardLine = document.getElementById('dailyRewardLine');
+  const dailyClaimBtn = document.getElementById('dailyClaimBtn');
   const statsOverlay = document.getElementById('statsOverlay');
   const closeStatsBtn = document.getElementById('closeStatsBtn');
 
@@ -1163,7 +1251,9 @@
           bank, stats, table: currentTableIdx, sound: soundOn,
           wheelLast: safeGet('bj_wheel_last', 0),
           achievements: Array.from(unlockedAch),
-          level, xp, equippedTier
+          level, xp, equippedTier,
+          purchasedTiers: Array.from(purchasedTiers),
+          dailyLogin
         }
       }, {merge:true}).catch(err=> console.warn('Sauvegarde cloud impossible', err));
     }, 600);
@@ -1185,9 +1275,12 @@
         if(p.level!=null) level = p.level;
         if(p.xp!=null) xp = p.xp;
         if(p.equippedTier!=null && tierFor(p.equippedTier)) equippedTier = p.equippedTier;
+        if(p.purchasedTiers) purchasedTiers = new Set([...purchasedTiers, ...p.purchasedTiers]);
+        if(p.dailyLogin) dailyLogin = Object.assign(dailyLogin, p.dailyLogin);
         safeSet('bj_ach', Array.from(unlockedAch));
         safeSet('bj_bank', bank); safeSet('bj_stats', stats); safeSet('bj_table', currentTableIdx); safeSet('bj_sound', soundOn);
         safeSet('bj_level', level); safeSet('bj_xp', xp); safeSet('bj_equipped_tier', equippedTier);
+        safeSet('bj_purchased_tiers', Array.from(purchasedTiers)); safeSet('bj_daily_login', dailyLogin);
         adjustTable();
         bankAmtEl.textContent = bank;
         soundBtn.textContent = soundOn ? '🔊' : '🔇';
@@ -2301,6 +2394,7 @@
   renderLevelBadge();
   updateBetUI();
   if(!safeGet('bj_tuto_seen', false)) openTuto();
+  else checkDailyLogin();
 })();
 </script>
 </body>
