@@ -269,6 +269,22 @@
     animation: confettiFall 1s ease-in forwards;
   }
 
+  .auth-tabs{display:flex;gap:6px;background:rgba(0,0,0,.25);border-radius:12px;padding:4px;margin-bottom:16px;width:100%;max-width:280px;}
+  .auth-tab{flex:1;text-align:center;padding:8px;border-radius:9px;font-size:12.5px;font-weight:700;color:rgba(242,234,214,.6);cursor:pointer;}
+  .auth-tab.active{background:var(--gold-soft);color:#1a1400;}
+  .auth-field{
+    width:100%;max-width:280px;
+    background:rgba(0,0,0,.25);
+    border:1px solid rgba(212,175,55,.35);
+    color:var(--cream);font-size:14px;
+    padding:11px 14px;border-radius:12px;
+    margin-bottom:10px;
+  }
+  .auth-field:focus{outline:2px solid var(--gold-soft);}
+  .auth-error{color:var(--red);font-size:12.5px;margin:-2px 0 10px;min-height:15px;}
+  .account-line{color:var(--green-win);font-size:12.5px;margin-bottom:10px;}
+  .auth-hidden{display:none !important;}
+
   @media (max-height: 640px){
     .cards-row{ min-height:60px; }
     .card-slot{ width:42px; height:60px; }
@@ -285,6 +301,7 @@
       <div class="icon-btn" id="soundBtn">🔊</div>
       <div class="icon-btn" id="statsBtn">📊</div>
       <div class="icon-btn" id="gamesMenuBtn">🎰</div>
+      <div class="icon-btn" id="accountBtn" title="Mon compte">👤</div>
       <div class="bankroll">💰 <span class="amt" id="bankAmt">500</span></div>
     </div>
   </header>
@@ -428,8 +445,52 @@
       </div>
     </div>
   </div>
+
+  <div class="overlay" id="authOverlay">
+    <div class="overlay-card">
+      <h3>Ton compte</h3>
+      <p id="authSub">Crée un compte pour garder ta banque et tes stats, même si tu changes d'appareil.</p>
+
+      <div id="authLoggedOut">
+        <div class="auth-tabs">
+          <div class="auth-tab active" id="tabSignup">Créer un compte</div>
+          <div class="auth-tab" id="tabLogin">Se connecter</div>
+        </div>
+        <input class="auth-field" id="authPseudo" maxlength="16" placeholder="Pseudo">
+        <input class="auth-field" id="authEmail" type="email" placeholder="Adresse e-mail" autocomplete="username">
+        <input class="auth-field" id="authPassword" type="password" placeholder="Mot de passe (6 caractères min.)" autocomplete="new-password">
+        <div class="auth-error" id="authError"></div>
+        <div class="overlay-actions">
+          <button class="btn-secondary" id="closeAuthBtn">Annuler</button>
+          <button class="btn-primary" id="authSubmitBtn">Créer mon compte</button>
+        </div>
+      </div>
+
+      <div id="authLoggedIn" class="auth-hidden">
+        <div class="account-line" id="accountLine">Connecté</div>
+        <div class="overlay-actions">
+          <button class="btn-secondary" id="closeAuthBtn2">Fermer</button>
+          <button class="btn-danger" id="logoutBtn">Déconnexion</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
+<!-- Compte joueur (Firebase Auth + Firestore) : même projet qu'Ascension, pour un compte unique -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+  window.FIREBASE_CONFIG = {
+    apiKey: "AIzaSyBk6XKD0_nuGXO5EtuGqe9LiOVEgNEtC8g",
+    authDomain: "ascension-game-370c0.firebaseapp.com",
+    projectId: "ascension-game-370c0",
+    storageBucket: "ascension-game-370c0.firebasestorage.app",
+    messagingSenderId: "57942969538",
+    appId: "1:57942969538:web:450cb74c51f985e9c5bf5b"
+  };
+</script>
 <script>
 (function(){
   const SUITS = [ {s:'♠', color:'black'}, {s:'♥', color:'red'}, {s:'♦', color:'red'}, {s:'♣', color:'black'} ];
@@ -472,9 +533,9 @@
     currentTableIdx = safeGet('bj_table', 0);
     if(currentTableIdx >= TABLES.length) currentTableIdx = TABLES.length - 1;
   }
-  function saveBank(){ safeSet('bj_bank', bank); }
-  function saveStats(){ safeSet('bj_stats', stats); }
-  function saveTable(){ safeSet('bj_table', currentTableIdx); }
+  function saveBank(){ safeSet('bj_bank', bank); scheduleCloudSave(); }
+  function saveStats(){ safeSet('bj_stats', stats); scheduleCloudSave(); }
+  function saveTable(){ safeSet('bj_table', currentTableIdx); scheduleCloudSave(); }
 
   function isRuined(){ return bank < TABLES[0].min; }
   function adjustTable(){
@@ -552,6 +613,158 @@
   const statsBtn = document.getElementById('statsBtn');
   const statsOverlay = document.getElementById('statsOverlay');
   const closeStatsBtn = document.getElementById('closeStatsBtn');
+
+  // ---------- compte joueur (Firebase Auth + Firestore) ----------
+  let fbDb = null, fbAuth = null, fbReady = false, currentUser = null;
+  let cloudSaveTimer = null;
+  let authMode = 'signup';
+
+  const accountBtn = document.getElementById('accountBtn');
+  const authOverlay = document.getElementById('authOverlay');
+  const authLoggedOut = document.getElementById('authLoggedOut');
+  const authLoggedIn = document.getElementById('authLoggedIn');
+  const accountLine = document.getElementById('accountLine');
+  const tabSignup = document.getElementById('tabSignup');
+  const tabLogin = document.getElementById('tabLogin');
+  const authPseudo = document.getElementById('authPseudo');
+  const authEmail = document.getElementById('authEmail');
+  const authPassword = document.getElementById('authPassword');
+  const authError = document.getElementById('authError');
+  const authSubmitBtn = document.getElementById('authSubmitBtn');
+  const authSub = document.getElementById('authSub');
+  const logoutBtn = document.getElementById('logoutBtn');
+
+  try{
+    const cfg = window.FIREBASE_CONFIG;
+    if(cfg && cfg.apiKey && cfg.apiKey !== 'REMPLACE_MOI' && window.firebase){
+      firebase.initializeApp(cfg);
+      fbDb = firebase.firestore();
+      fbAuth = firebase.auth();
+      fbReady = true;
+      fbAuth.onAuthStateChanged(user=>{
+        currentUser = user;
+        updateAccountUI();
+        if(user) loadCloudProgress();
+      });
+    }
+  }catch(e){ console.warn('Compte indisponible', e); fbReady = false; }
+
+  function updateAccountUI(){
+    if(currentUser){
+      accountBtn.textContent = '🟢';
+      authLoggedOut.classList.add('auth-hidden');
+      authLoggedIn.classList.remove('auth-hidden');
+      accountLine.textContent = `Connecté : ${currentUser.displayName || 'Joueur'}`;
+      authSub.textContent = 'Ta banque et tes stats sont sauvegardées sur ce compte.';
+    } else {
+      accountBtn.textContent = '👤';
+      authLoggedOut.classList.remove('auth-hidden');
+      authLoggedIn.classList.add('auth-hidden');
+      authSub.textContent = "Crée un compte pour garder ta banque et tes stats, même si tu changes d'appareil.";
+    }
+  }
+
+  function setAuthTab(mode){
+    authMode = mode;
+    tabSignup.classList.toggle('active', mode==='signup');
+    tabLogin.classList.toggle('active', mode==='login');
+    authPseudo.classList.toggle('auth-hidden', mode==='login');
+    authSubmitBtn.textContent = mode==='signup' ? 'Créer mon compte' : 'Se connecter';
+  }
+  tabSignup.addEventListener('click', ()=> setAuthTab('signup'));
+  tabLogin.addEventListener('click', ()=> setAuthTab('login'));
+
+  function openAuthOverlay(){
+    authError.textContent = '';
+    authPassword.value = '';
+    setAuthTab('signup');
+    authOverlay.classList.add('show');
+  }
+  accountBtn.addEventListener('click', ()=>{
+    if(!fbReady){ authError.textContent = ''; }
+    openAuthOverlay();
+  });
+  document.getElementById('closeAuthBtn').addEventListener('click', ()=> authOverlay.classList.remove('show'));
+  document.getElementById('closeAuthBtn2').addEventListener('click', ()=> authOverlay.classList.remove('show'));
+  logoutBtn.addEventListener('click', ()=>{ if(fbReady) fbAuth.signOut(); authOverlay.classList.remove('show'); });
+
+  function authErrorMessage(err){
+    const c = err && err.code;
+    if(c==='auth/email-already-in-use') return 'Cet e-mail a déjà un compte — essaie de te connecter.';
+    if(c==='auth/invalid-email') return 'Adresse e-mail invalide.';
+    if(c==='auth/weak-password') return 'Mot de passe trop faible.';
+    if(c==='auth/user-not-found' || c==='auth/wrong-password' || c==='auth/invalid-credential') return 'E-mail ou mot de passe incorrect.';
+    return 'Une erreur est survenue, réessaie.';
+  }
+
+  authSubmitBtn.addEventListener('click', ()=>{
+    if(!fbReady){ authError.textContent = 'Compte indisponible pour le moment.'; return; }
+    authError.textContent = '';
+    const email = authEmail.value.trim();
+    const pass = authPassword.value;
+    const pseudo = authPseudo.value.trim().slice(0,16);
+
+    if(!email || !pass){ authError.textContent = "Remplis l'e-mail et le mot de passe."; return; }
+    if(pass.length < 6){ authError.textContent = 'Le mot de passe doit faire 6 caractères minimum.'; return; }
+    if(authMode==='signup' && !pseudo){ authError.textContent = 'Choisis un pseudo.'; return; }
+
+    authSubmitBtn.disabled = true; authSubmitBtn.textContent = '…';
+    if(authMode==='signup'){
+      fbAuth.createUserWithEmailAndPassword(email, pass)
+        .then(cred=> cred.user.updateProfile({ displayName: pseudo }))
+        .then(()=>{ authSubmitBtn.disabled=false; setAuthTab(authMode); authOverlay.classList.remove('show'); })
+        .catch(err=>{
+          authSubmitBtn.disabled = false; authSubmitBtn.textContent = 'Créer mon compte';
+          authError.textContent = authErrorMessage(err);
+        });
+    } else {
+      fbAuth.signInWithEmailAndPassword(email, pass)
+        .then(()=>{ authSubmitBtn.disabled=false; setAuthTab(authMode); authOverlay.classList.remove('show'); })
+        .catch(err=>{
+          authSubmitBtn.disabled = false; authSubmitBtn.textContent = 'Se connecter';
+          authError.textContent = authErrorMessage(err);
+        });
+    }
+  });
+
+  // Sauvegarde la progression (banque, stats, table, son) sur le compte, avec un léger délai pour grouper les écritures
+  function scheduleCloudSave(){
+    if(!fbReady || !currentUser) return;
+    clearTimeout(cloudSaveTimer);
+    cloudSaveTimer = setTimeout(()=>{
+      fbDb.collection('users').doc(currentUser.uid).set({
+        blackjack: {
+          bank, stats, table: currentTableIdx, sound: soundOn,
+          wheelLast: safeGet('bj_wheel_last', 0)
+        }
+      }, {merge:true}).catch(err=> console.warn('Sauvegarde cloud impossible', err));
+    }, 600);
+  }
+
+  // Recharge la progression sauvegardée sur le compte (prioritaire sur la sauvegarde locale de cet appareil)
+  function loadCloudProgress(){
+    if(!fbReady || !currentUser) return;
+    fbDb.collection('users').doc(currentUser.uid).get().then(snap=>{
+      const d = snap.exists ? snap.data() : null;
+      if(d && d.blackjack){
+        const p = d.blackjack;
+        if(p.bank!=null) bank = p.bank;
+        if(p.stats) stats = Object.assign(stats, p.stats);
+        if(p.table!=null) currentTableIdx = p.table;
+        if(p.sound!=null) soundOn = p.sound;
+        if(p.wheelLast!=null) safeSet('bj_wheel_last', p.wheelLast);
+        safeSet('bj_bank', bank); safeSet('bj_stats', stats); safeSet('bj_table', currentTableIdx); safeSet('bj_sound', soundOn);
+        adjustTable();
+        bankAmtEl.textContent = bank;
+        soundBtn.textContent = soundOn ? '🔊' : '🔇';
+        renderChips();
+        renderTableLabel();
+      } else {
+        // Rien sur le compte : on y envoie la progression de cet appareil
+        scheduleCloudSave();
+      }
+    }).catch(err=> console.warn('Chargement cloud impossible', err));
+  }
   const statsGrid = document.getElementById('statsGrid');
   const insuranceOverlay = document.getElementById('insuranceOverlay');
   const insAmt = document.getElementById('insAmt');
@@ -892,6 +1105,7 @@
     wheelEl.style.transform = `rotate(${wheelRotation}deg)`;
     spinWheelBtn.disabled = true;
     safeSet('bj_wheel_last', Date.now());
+    scheduleCloudSave();
     sfxChip();
     setTimeout(() => {
       const reward = WHEEL_VALUES[idx];
@@ -973,6 +1187,7 @@
     soundOn = !soundOn;
     soundBtn.textContent = soundOn ? '🔊' : '🔇';
     safeSet('bj_sound', soundOn);
+    scheduleCloudSave();
     if(soundOn){ ensureAudio(); sfxChip(); }
   });
 
