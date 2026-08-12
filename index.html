@@ -286,6 +286,36 @@
   .account-line{color:var(--green-win);font-size:12.5px;margin-bottom:10px;}
   .auth-hidden{display:none !important;}
 
+  .slot-reels{display:flex; gap:10px; justify-content:center; margin:14px 0;}
+  .slot-reel{
+    width:64px; height:64px; border-radius:12px;
+    background: rgba(0,0,0,.35); border:1px solid rgba(212,175,55,.4);
+    display:flex; align-items:center; justify-content:center;
+    font-size:32px; overflow:hidden;
+  }
+  .slot-reel.spinning{ animation: slotSpin .12s linear infinite; }
+  @keyframes slotSpin{ 0%{transform:translateY(-4px);} 50%{transform:translateY(4px);} 100%{transform:translateY(-4px);} }
+  .slot-paytable{ font-size:11.5px; color:rgba(242,234,214,.65); line-height:1.6; margin:4px 0 12px; text-align:left; }
+
+  .ach-list{ display:flex; flex-direction:column; gap:8px; max-height:52vh; overflow-y:auto; }
+  .ach-item{
+    display:flex; align-items:center; gap:12px;
+    background: rgba(0,0,0,.25); border-radius:12px; padding:10px 12px;
+    border:1px solid rgba(212,175,55,.15);
+  }
+  .ach-item.locked{ opacity:.4; }
+  .ach-icon{ font-size:24px; width:32px; text-align:center; flex-shrink:0; }
+  .ach-name{ font-family:'Georgia',serif; font-weight:700; font-size:13.5px; color:var(--cream); }
+  .ach-desc{ font-size:11.5px; color:rgba(242,234,214,.6); margin-top:2px; }
+  .ach-toast{
+    position:fixed; left:50%; top:14px; transform:translateX(-50%) translateY(-60px);
+    background: linear-gradient(160deg, #0f4530, #082a1c); border:1px solid var(--gold);
+    color:var(--cream); padding:10px 16px; border-radius:14px; z-index:60;
+    display:flex; align-items:center; gap:10px; box-shadow:0 8px 24px rgba(0,0,0,.5);
+    transition: transform .4s ease; font-size:13px; max-width:88%;
+  }
+  .ach-toast.show{ transform:translateX(-50%) translateY(0); }
+
   @media (max-height: 640px){
     .cards-row{ min-height:60px; }
     .card-slot{ width:42px; height:60px; }
@@ -301,6 +331,7 @@
     <div class="header-right">
       <div class="icon-btn" id="soundBtn">🔊</div>
       <div class="icon-btn" id="statsBtn">📊</div>
+      <div class="icon-btn" id="achBtn" title="Succès">🏆</div>
       <div class="icon-btn" id="gamesMenuBtn">🎰</div>
       <div class="icon-btn" id="accountBtn" title="Mon compte">👤</div>
       <div class="bankroll">💰 <span class="amt" id="bankAmt">500</span></div>
@@ -358,6 +389,7 @@
         <button class="btn-secondary" id="openWheelBtn" style="text-align:left; padding:14px 16px;">🎡 Roue de la Fortune <span style="opacity:.6; font-size:11px; display:block;">Gratuit, une fois toutes les 3 min</span></button>
         <button class="btn-secondary" id="openCoinBtn" style="text-align:left; padding:14px 16px;">🪙 Pile ou Face <span style="opacity:.6; font-size:11px; display:block;">Misez pour doubler (ou tout perdre)</span></button>
         <button class="btn-secondary" id="openHiloBtn2" style="text-align:left; padding:14px 16px;">🃏 Plus haut / Plus bas <span style="opacity:.6; font-size:11px; display:block;">Gratuit, cagnotte à risque</span></button>
+        <button class="btn-secondary" id="openSlotBtn" style="text-align:left; padding:14px 16px;">🎰 Machine à Sous <span style="opacity:.6; font-size:11px; display:block;">Alignez 3 symboles pour un gros gain</span></button>
       </div>
       <div class="overlay-actions" style="margin-top:14px;">
         <button class="btn-secondary" id="closeGamesMenuBtn">Fermer</button>
@@ -408,6 +440,48 @@
       </div>
     </div>
   </div>
+
+  <div class="overlay" id="slotOverlay">
+    <div class="overlay-card">
+      <h3>Machine à Sous</h3>
+      <p>Misez, tirez sur le levier, alignez 3 symboles identiques.</p>
+      <div class="slot-reels">
+        <div class="slot-reel" id="slotR0">🍒</div>
+        <div class="slot-reel" id="slotR1">🍒</div>
+        <div class="slot-reel" id="slotR2">🍒</div>
+      </div>
+      <div class="slot-paytable">
+        7️⃣7️⃣7️⃣ ×50 &nbsp;·&nbsp; 💎💎💎 ×20 &nbsp;·&nbsp; ⭐⭐⭐ ×10<br>
+        🔔🔔🔔 ×6 &nbsp;·&nbsp; 🍋🍋🍋 ×4 &nbsp;·&nbsp; 🍒🍒🍒 ×3 &nbsp;·&nbsp; 🍒🍒 = mise remboursée
+      </div>
+      <div class="hilo-pot">Mise : <span id="slotStakeAmt">0</span></div>
+      <div class="chips" id="slotChipsRow">
+        <div class="chip" data-v="10" style="background:radial-gradient(circle at 35% 30%,#4a8f5a,#1e5c30);">10</div>
+        <div class="chip" data-v="25" style="background:radial-gradient(circle at 35% 30%,#5a8fd4,#2a4f8f);">25</div>
+        <div class="chip" data-v="50" style="background:radial-gradient(circle at 35% 30%,#3a3a3a,#111);">50</div>
+        <div class="chip" data-v="100" style="background:radial-gradient(circle at 35% 30%,#c94a4a,#7a1f1f);">100</div>
+      </div>
+      <div class="hilo-msg" id="slotMsg"></div>
+      <div class="overlay-actions" style="margin-top:8px;">
+        <button class="btn-secondary" id="closeSlotBtn">Fermer</button>
+        <button class="btn-secondary" id="slotClearBtn">Effacer</button>
+        <button class="btn-primary" id="slotSpinBtn" disabled>Tirer le levier</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="achOverlay">
+    <div class="overlay-card">
+      <h3>Succès</h3>
+      <p id="achProgress">0 / 0 débloqués</p>
+      <div class="ach-list" id="achList"></div>
+      <div class="overlay-actions" style="margin-top:14px;">
+        <button class="btn-secondary" id="closeAchBtn">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="ach-toast" id="achToast"></div>
 
   <div class="overlay" id="hiloOverlay">
     <div class="overlay-card">
@@ -532,6 +606,62 @@
     root.setProperty('--felt-light', light);
   }
 
+  // ---------- succès ----------
+  let unlockedAch = new Set();
+  const ACHIEVEMENTS = [
+    { id:'first_win',   icon:'🃏', name:'Premier gain',      desc:'Gagnez votre première main.',            test:()=> stats.wins >= 1 },
+    { id:'first_bj',     icon:'♠️', name:'Blackjack !',        desc:'Obtenez votre premier blackjack naturel.', test:()=> stats.blackjacks >= 1 },
+    { id:'streak5',      icon:'🔥', name:'En feu',            desc:'Enchaînez 5 victoires d\'affilée.',      test:()=> stats.bestStreak >= 5 },
+    { id:'streak10',     icon:'☄️', name:'Intouchable',        desc:'Enchaînez 10 victoires d\'affilée.',     test:()=> stats.bestStreak >= 10 },
+    { id:'hands50',      icon:'🎴', name:'Habitué',           desc:'Jouez 50 mains.',                        test:()=> stats.hands >= 50 },
+    { id:'hands500',     icon:'🏛️', name:'Pilier du casino',   desc:'Jouez 500 mains.',                       test:()=> stats.hands >= 500 },
+    { id:'bank1000',     icon:'💵', name:'Millier',           desc:'Atteignez 1 000 jetons.',                test:()=> bank >= 1000 },
+    { id:'bank20000',    icon:'💰', name:'Table d\'Or',        desc:'Atteignez 20 000 jetons.',               test:()=> bank >= 20000 },
+    { id:'bank250000',   icon:'💎', name:'Table Diamant',     desc:'Atteignez 250 000 jetons.',              test:()=> bank >= 250000 },
+    { id:'bank10m',      icon:'👑', name:'Légende du casino', desc:'Atteignez 10 000 000 de jetons.',        test:()=> bank >= 10000000 },
+    { id:'bigwin',       icon:'🚀', name:'Gros coup',         desc:'Gagnez 1 000 jetons ou plus sur une seule main.', test:()=> stats.bestWin >= 1000 },
+    { id:'ruined',       icon:'💀', name:'Fond du gouffre',   desc:'Faites faillite… puis relevez-vous.',    test:()=> stats.hands >= 1 && bank < TABLES[0].min },
+  ];
+
+  function checkAchievements(){
+    let newlyUnlocked = [];
+    ACHIEVEMENTS.forEach(a => {
+      if(!unlockedAch.has(a.id) && a.test()){
+        unlockedAch.add(a.id);
+        newlyUnlocked.push(a);
+      }
+    });
+    if(newlyUnlocked.length){
+      safeSet('bj_ach', Array.from(unlockedAch));
+      scheduleCloudSave();
+      newlyUnlocked.forEach((a,i) => setTimeout(()=> showAchToast(a), i*1600));
+    }
+  }
+
+  function showAchToast(a){
+    achToast.innerHTML = `<span style="font-size:22px;">${a.icon}</span><span><b>Succès débloqué</b><br>${a.name}</span>`;
+    achToast.classList.add('show');
+    if(soundOn){ ensureAudio(); sfxWin(); }
+    setTimeout(()=> achToast.classList.remove('show'), 2600);
+  }
+
+  function renderAchievements(){
+    achList.innerHTML = '';
+    ACHIEVEMENTS.forEach(a => {
+      const unlocked = unlockedAch.has(a.id);
+      const row = document.createElement('div');
+      row.className = 'ach-item' + (unlocked ? '' : ' locked');
+      row.innerHTML = `
+        <div class="ach-icon">${unlocked ? a.icon : '🔒'}</div>
+        <div>
+          <div class="ach-name">${a.name}</div>
+          <div class="ach-desc">${a.desc}</div>
+        </div>`;
+      achList.appendChild(row);
+    });
+    achProgress.textContent = `${unlockedAch.size} / ${ACHIEVEMENTS.length} débloqués`;
+  }
+
   // ---------- persistence ----------
   function safeGet(k, fallback){
     try{ const v = localStorage.getItem(k); return v!==null ? JSON.parse(v) : fallback; }catch(e){ return fallback; }
@@ -544,9 +674,10 @@
     soundOn = safeGet('bj_sound', true);
     currentTableIdx = safeGet('bj_table', 0);
     if(currentTableIdx >= TABLES.length) currentTableIdx = TABLES.length - 1;
+    unlockedAch = new Set(safeGet('bj_ach', []));
   }
-  function saveBank(){ safeSet('bj_bank', bank); scheduleCloudSave(); }
-  function saveStats(){ safeSet('bj_stats', stats); scheduleCloudSave(); }
+  function saveBank(){ safeSet('bj_bank', bank); scheduleCloudSave(); checkAchievements(); }
+  function saveStats(){ safeSet('bj_stats', stats); scheduleCloudSave(); checkAchievements(); }
   function saveTable(){ safeSet('bj_table', currentTableIdx); scheduleCloudSave(); }
 
   function isRuined(){ return bank < TABLES[0].min; }
@@ -614,6 +745,20 @@
   const coinStakeAmt = document.getElementById('coinStakeAmt');
   const coinMsg = document.getElementById('coinMsg');
   const coinEl = document.getElementById('coinEl');
+  const openSlotBtn = document.getElementById('openSlotBtn');
+  const slotOverlay = document.getElementById('slotOverlay');
+  const closeSlotBtn = document.getElementById('closeSlotBtn');
+  const slotClearBtn = document.getElementById('slotClearBtn');
+  const slotSpinBtn = document.getElementById('slotSpinBtn');
+  const slotStakeAmt = document.getElementById('slotStakeAmt');
+  const slotMsg = document.getElementById('slotMsg');
+  const slotReels = [document.getElementById('slotR0'), document.getElementById('slotR1'), document.getElementById('slotR2')];
+  const achBtn = document.getElementById('achBtn');
+  const achOverlay = document.getElementById('achOverlay');
+  const achList = document.getElementById('achList');
+  const achProgress = document.getElementById('achProgress');
+  const closeAchBtn = document.getElementById('closeAchBtn');
+  const achToast = document.getElementById('achToast');
   const hiloOverlay = document.getElementById('hiloOverlay');
   const hiloCardZone = document.getElementById('hiloCardZone');
   const hiloPotEl = document.getElementById('hiloPot');
@@ -747,7 +892,8 @@
       fbDb.collection('users').doc(currentUser.uid).set({
         blackjack: {
           bank, stats, table: currentTableIdx, sound: soundOn,
-          wheelLast: safeGet('bj_wheel_last', 0)
+          wheelLast: safeGet('bj_wheel_last', 0),
+          achievements: Array.from(unlockedAch)
         }
       }, {merge:true}).catch(err=> console.warn('Sauvegarde cloud impossible', err));
     }, 600);
@@ -765,6 +911,8 @@
         if(p.table!=null) currentTableIdx = p.table;
         if(p.sound!=null) soundOn = p.sound;
         if(p.wheelLast!=null) safeSet('bj_wheel_last', p.wheelLast);
+        if(p.achievements) unlockedAch = new Set([...unlockedAch, ...p.achievements]);
+        safeSet('bj_ach', Array.from(unlockedAch));
         safeSet('bj_bank', bank); safeSet('bj_stats', stats); safeSet('bj_table', currentTableIdx); safeSet('bj_sound', soundOn);
         adjustTable();
         bankAmtEl.textContent = bank;
@@ -1074,6 +1222,8 @@
       : "D'autres façons de faire fructifier — ou de regagner — vos jetons.";
     openCoinBtn.disabled = bank <= 0;
     openCoinBtn.style.opacity = bank <= 0 ? .4 : 1;
+    openSlotBtn.disabled = bank <= 0;
+    openSlotBtn.style.opacity = bank <= 0 ? .4 : 1;
     gamesMenuOverlay.classList.add('show');
   }
   gamesMenuBtn.addEventListener('click', openGamesMenu);
@@ -1198,6 +1348,101 @@
       updateCoinFlipBtn();
     }, 1050);
   });
+
+  // ---------- machine à sous ----------
+  const SLOT_SYMBOLS = [
+    { sym:'🍒', weight:30 }, { sym:'🍋', weight:25 }, { sym:'🔔', weight:18 },
+    { sym:'⭐', weight:12 }, { sym:'💎', weight:8 },  { sym:'7️⃣', weight:4 },
+  ];
+  const SLOT_PAYOUTS = { '🍒':3, '🍋':4, '🔔':6, '⭐':10, '💎':20, '7️⃣':50 };
+  const SLOT_TOTAL_WEIGHT = SLOT_SYMBOLS.reduce((s,x)=>s+x.weight,0);
+  let slotStake = 0;
+  let slotSpinning = false;
+
+  function pickSlotSymbol(){
+    let r = Math.random()*SLOT_TOTAL_WEIGHT;
+    for(const s of SLOT_SYMBOLS){ if(r < s.weight) return s.sym; r -= s.weight; }
+    return SLOT_SYMBOLS[0].sym;
+  }
+
+  openSlotBtn.addEventListener('click', () => { if(bank<=0) return; gamesMenuOverlay.classList.remove('show'); openSlot(); });
+
+  function openSlot(){
+    slotStake = 0;
+    slotStakeAmt.textContent = 0;
+    slotMsg.textContent = '';
+    slotSpinBtn.disabled = true;
+    slotOverlay.classList.add('show');
+  }
+  closeSlotBtn.addEventListener('click', () => { if(!slotSpinning) slotOverlay.classList.remove('show'); });
+  slotClearBtn.addEventListener('click', () => { if(slotSpinning) return; slotStake = 0; slotStakeAmt.textContent = 0; slotSpinBtn.disabled = true; });
+
+  document.querySelectorAll('#slotChipsRow .chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      if(slotSpinning) return;
+      const v = Number(chip.dataset.v);
+      if(v > bank - slotStake) return;
+      ensureAudio(); sfxChip();
+      slotStake += v;
+      slotStakeAmt.textContent = slotStake;
+      slotSpinBtn.disabled = !(slotStake > 0 && slotStake <= bank);
+    });
+  });
+
+  slotSpinBtn.addEventListener('click', () => {
+    if(slotSpinning || slotStake<=0 || slotStake>bank) return;
+    ensureAudio();
+    slotSpinning = true;
+    setBank(bank - slotStake);
+    slotSpinBtn.disabled = true;
+    slotClearBtn.disabled = true;
+    slotMsg.textContent = 'Ça tourne...';
+    slotReels.forEach(r => r.classList.add('spinning'));
+
+    const result = [pickSlotSymbol(), pickSlotSymbol(), pickSlotSymbol()];
+    const spinTicker = setInterval(() => {
+      slotReels.forEach(r => r.textContent = pickSlotSymbol());
+    }, 80);
+
+    slotReels.forEach((reelEl, i) => {
+      setTimeout(() => {
+        reelEl.classList.remove('spinning');
+        reelEl.textContent = result[i];
+        if(i === 2){
+          clearInterval(spinTicker);
+          const [a,b,c] = result;
+          let win = 0;
+          if(a===b && b===c){
+            win = slotStake * SLOT_PAYOUTS[a];
+          } else if(a==='🍒' && b==='🍒' || b==='🍒' && c==='🍒' || a==='🍒' && c==='🍒'){
+            win = slotStake; // deux cerises : mise remboursée
+          }
+          if(win > 0){
+            setBank(bank + win, true);
+            if(a===b && b===c){
+              slotMsg.textContent = `${a}${b}${c} — vous gagnez ${win} jetons !`;
+              if(win >= slotStake*20){ sfxWin(); confettiBurst(); }
+              else sfxWin();
+            } else {
+              slotMsg.textContent = `Deux cerises — mise remboursée (${win}).`;
+            }
+          } else {
+            slotMsg.textContent = 'Pas de combinaison — perdu.';
+            sfxLose();
+          }
+          adjustTable(); renderChips(); renderTableLabel();
+          slotStake = 0; slotStakeAmt.textContent = 0;
+          slotSpinBtn.disabled = true;
+          slotClearBtn.disabled = false;
+          slotSpinning = false;
+        }
+      }, 700 + i*400);
+    });
+  });
+
+  // ---------- succès (overlay) ----------
+  achBtn.addEventListener('click', () => { renderAchievements(); achOverlay.classList.add('show'); });
+  closeAchBtn.addEventListener('click', () => achOverlay.classList.remove('show'));
 
   soundBtn.addEventListener('click', () => {
     soundOn = !soundOn;
