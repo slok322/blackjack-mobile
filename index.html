@@ -21,6 +21,7 @@
   html,body{
     margin:0; padding:0; height:100%;
     background: radial-gradient(ellipse at 50% 0%, var(--felt-light) 0%, var(--felt) 45%, var(--felt-dark) 100%);
+    transition: background 1s ease;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     color: var(--cream);
     overflow: hidden;
@@ -509,16 +510,27 @@
   let stats = { hands:0, wins:0, losses:0, pushes:0, blackjacks:0, bestWin:0, streak:0, bestStreak:0 };
 
   const TABLES = [
-    { name:'Table Débutant', threshold:0,      min:5,    max:200,   chips:[5,25,50,100] },
-    { name:'Table Bronze',   threshold:1000,   min:25,   max:500,   chips:[25,50,100,250] },
-    { name:'Table Argent',   threshold:5000,   min:100,  max:2000,  chips:[100,250,500,1000] },
-    { name:'Table Or',       threshold:20000,  min:500,  max:10000, chips:[500,1000,2500,5000] },
-    { name:'Table Diamant',  threshold:100000, min:2500, max:50000, chips:[2500,5000,10000,25000] },
+    { name:'Table Débutant', threshold:0,        min:5,      max:200,     chips:[5,25,50,100],           felt:['#051d15','#0c3d2b','#16603f'] },
+    { name:'Table Bronze',   threshold:1000,     min:25,     max:500,     chips:[25,50,100,250],          felt:['#1f0f04','#4a2810','#7a4a1f'] },
+    { name:'Table Argent',   threshold:5000,     min:100,    max:2000,    chips:[100,250,500,1000],       felt:['#14171a','#2e3338','#4d545c'] },
+    { name:'Table Or',       threshold:20000,    min:500,    max:10000,   chips:[500,1000,2500,5000],     felt:['#241a02','#574009','#8a6b12'] },
+    { name:'Table Platine',  threshold:75000,    min:2000,   max:40000,   chips:[2000,5000,10000,20000],  felt:['#10151a','#232c34','#3c4a56'] },
+    { name:'Table Diamant',  threshold:250000,   min:8000,   max:150000,  chips:[8000,15000,30000,75000], felt:['#041826','#0d3550','#1c5f85'] },
+    { name:'Table Rubis',    threshold:750000,   min:25000,  max:500000,  chips:[25000,50000,100000,250000], felt:['#220509','#521015','#7f1a22'] },
+    { name:'Table Émeraude', threshold:2500000,  min:80000,  max:1500000, chips:[80000,150000,300000,750000], felt:['#01190f','#04502c','#0a7d43'] },
+    { name:'Table Légende',  threshold:10000000, min:250000, max:5000000, chips:[250000,500000,1000000,2500000], felt:['#0a0805','#241b08','#4a3610'] },
   ];
   let currentTableIdx = 0;
   let lastBet = 0;
   function curTable(){ return TABLES[currentTableIdx]; }
   function fmtNum(n){ return n.toLocaleString('fr-FR'); }
+  function applyTableTheme(){
+    const [dark, mid, light] = curTable().felt;
+    const root = document.documentElement.style;
+    root.setProperty('--felt-dark', dark);
+    root.setProperty('--felt', mid);
+    root.setProperty('--felt-light', light);
+  }
 
   // ---------- persistence ----------
   function safeGet(k, fallback){
@@ -936,6 +948,7 @@
   }
 
   function renderTableLabel(){
+    applyTableTheme();
     tableLabelBtn.textContent = '';
     const span = document.createElement('span');
     span.textContent = curTable().name + ' ';
@@ -951,9 +964,12 @@
       const row = document.createElement('div');
       row.className = 'table-row' + (locked ? ' locked' : '') + (idx===currentTableIdx ? ' current' : '');
       row.innerHTML = `
-        <div>
-          <div class="t-name">${t.name}</div>
-          <div class="t-info">Mise ${fmtNum(t.min)} – ${fmtNum(t.max)} ${t.threshold>0 ? '· dès ' + fmtNum(t.threshold) + ' jetons' : ''}</div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="width:14px;height:14px;border-radius:50%;flex-shrink:0;background:radial-gradient(circle at 35% 30%, ${t.felt[2]}, ${t.felt[0]});border:1px solid rgba(212,175,55,.4);"></div>
+          <div>
+            <div class="t-name">${t.name}</div>
+            <div class="t-info">Mise ${fmtNum(t.min)} – ${fmtNum(t.max)} ${t.threshold>0 ? '· dès ' + fmtNum(t.threshold) + ' jetons' : ''}</div>
+          </div>
         </div>
         <div class="t-mark">${idx===currentTableIdx ? '⭐' : (locked ? '🔒' : '➡️')}</div>
       `;
