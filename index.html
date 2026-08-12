@@ -316,6 +316,42 @@
   }
   .ach-toast.show{ transform:translateX(-50%) translateY(0); }
 
+  .side-bets-row{ display:flex; gap:8px; width:100%; max-width:340px; }
+  .side-bet-btn{
+    flex:1; background: rgba(0,0,0,.25); border:1px solid rgba(212,175,55,.3);
+    color: rgba(242,234,214,.75); font-size:11.5px; font-weight:600;
+    padding:8px 6px; border-radius:12px; text-align:center;
+  }
+  .side-bet-btn .sb-amt{ display:block; font-size:10.5px; opacity:.7; margin-top:2px; }
+  .side-bet-btn.active{ background: rgba(212,175,55,.18); border-color: var(--gold); color: var(--gold-soft); }
+
+  .quest-item, .history-item{
+    background: rgba(0,0,0,.25); border-radius:12px; padding:10px 12px;
+    border:1px solid rgba(212,175,55,.15); margin-bottom:8px;
+  }
+  .quest-item.done{ border-color: var(--gold); background: rgba(212,175,55,.1); }
+  .quest-name{ font-size:13px; font-weight:600; color:var(--cream); }
+  .quest-bar-wrap{ background: rgba(0,0,0,.35); border-radius:6px; height:6px; margin-top:6px; overflow:hidden; }
+  .quest-bar{ height:100%; background: linear-gradient(90deg, var(--gold-soft), var(--gold)); }
+  .quest-reward{ font-size:11px; color: rgba(242,234,214,.6); margin-top:4px; }
+  .history-item{ display:flex; justify-content:space-between; align-items:center; font-size:12.5px; }
+  .history-item .h-cards{ color: rgba(242,234,214,.6); font-size:11px; }
+  .history-win{ color: var(--green-win); font-weight:700; }
+  .history-lose{ color: var(--red); font-weight:700; }
+  .history-push{ color: var(--gold-soft); font-weight:700; }
+
+  .tuto-card{ max-width:340px; }
+  .tuto-icon{ font-size:40px; text-align:center; margin-bottom:6px; }
+  .tuto-title{ font-family:'Georgia',serif; color:var(--gold-soft); font-size:17px; font-weight:700; text-align:center; margin-bottom:8px; }
+  .tuto-body{ font-size:13px; line-height:1.6; color:rgba(242,234,214,.85); text-align:left; }
+  .tuto-body b{ color:var(--cream); }
+  .tuto-body ul{ margin:6px 0; padding-left:18px; }
+  .tuto-body li{ margin-bottom:4px; }
+  .tuto-dots{ display:flex; justify-content:center; gap:6px; margin:14px 0 4px; }
+  .tuto-dot{ width:7px; height:7px; border-radius:50%; background:rgba(242,234,214,.25); }
+  .tuto-dot.active{ background:var(--gold-soft); width:18px; border-radius:4px; }
+  .tuto-skip{ text-align:center; font-size:11.5px; color:rgba(242,234,214,.5); margin-top:10px; text-decoration:underline; cursor:pointer; }
+
   @media (max-height: 640px){
     .cards-row{ min-height:60px; }
     .card-slot{ width:42px; height:60px; }
@@ -331,9 +367,10 @@
     <div class="header-right">
       <div class="icon-btn" id="soundBtn">🔊</div>
       <div class="icon-btn" id="statsBtn">📊</div>
-      <div class="icon-btn" id="achBtn" title="Succès">🏆</div>
+      <div class="icon-btn" id="achBtn" title="Progression">🏆</div>
       <div class="icon-btn" id="gamesMenuBtn">🎰</div>
       <div class="icon-btn" id="accountBtn" title="Mon compte">👤</div>
+      <div class="icon-btn" id="helpBtn" title="Comment jouer">❓</div>
       <div class="bankroll">💰 <span class="amt" id="bankAmt">500</span></div>
     </div>
   </header>
@@ -356,6 +393,10 @@
     <div class="table-label" id="tableLabelBtn">Table Débutant <span class="chev">▾</span></div>
     <div class="current-bet">Mise : <span class="v" id="betAmt">0</span> <span class="bet-range" id="betRange"></span></div>
     <div class="chips" id="chipsRow"></div>
+    <div class="side-bets-row" id="sideBetsRow">
+      <button class="side-bet-btn" id="ppBtn">👥 Paire Parfaite <span class="sb-amt" id="ppStakeLbl"></span></button>
+      <button class="side-bet-btn" id="tpBtn">🎲 21+3 <span class="sb-amt" id="tpStakeLbl"></span></button>
+    </div>
     <div class="bet-shortcuts">
       <button class="clear-btn" id="rebetBtn">↺ Remiser</button>
       <button class="clear-btn" id="allInBtn">🔥 All-in</button>
@@ -472,9 +513,28 @@
 
   <div class="overlay" id="achOverlay">
     <div class="overlay-card">
-      <h3>Succès</h3>
-      <p id="achProgress">0 / 0 débloqués</p>
-      <div class="ach-list" id="achList"></div>
+      <h3>Progression</h3>
+      <div class="auth-tabs" id="progTabs">
+        <div class="auth-tab active" id="progTabAch">Succès</div>
+        <div class="auth-tab" id="progTabQuest">Quêtes</div>
+        <div class="auth-tab" id="progTabHist">Historique</div>
+      </div>
+
+      <div id="progPanelAch">
+        <p id="achProgress">0 / 0 débloqués</p>
+        <div class="ach-list" id="achList"></div>
+      </div>
+
+      <div id="progPanelQuest" class="auth-hidden">
+        <p>Se réinitialise chaque jour.</p>
+        <div id="questList"></div>
+      </div>
+
+      <div id="progPanelHist" class="auth-hidden">
+        <p id="historyEmpty">Vos dernières mains apparaîtront ici.</p>
+        <div class="ach-list" id="historyList"></div>
+      </div>
+
       <div class="overlay-actions" style="margin-top:14px;">
         <button class="btn-secondary" id="closeAchBtn">Fermer</button>
       </div>
@@ -518,6 +578,18 @@
       <div class="overlay-actions">
         <button class="btn-secondary" id="closeStatsBtn">Fermer</button>
       </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="tutoOverlay">
+    <div class="overlay-card tuto-card">
+      <div id="tutoContent"></div>
+      <div class="tuto-dots" id="tutoDots"></div>
+      <div class="overlay-actions" style="margin-top:6px;">
+        <button class="btn-secondary" id="tutoPrevBtn">Précédent</button>
+        <button class="btn-primary" id="tutoNextBtn">Suivant</button>
+      </div>
+      <div class="tuto-skip" id="tutoSkipBtn">Passer le tutoriel</div>
     </div>
   </div>
 
@@ -759,6 +831,26 @@
   const achProgress = document.getElementById('achProgress');
   const closeAchBtn = document.getElementById('closeAchBtn');
   const achToast = document.getElementById('achToast');
+  const progTabAch = document.getElementById('progTabAch');
+  const progTabQuest = document.getElementById('progTabQuest');
+  const progTabHist = document.getElementById('progTabHist');
+  const progPanelAch = document.getElementById('progPanelAch');
+  const progPanelQuest = document.getElementById('progPanelQuest');
+  const progPanelHist = document.getElementById('progPanelHist');
+  const questList = document.getElementById('questList');
+  const historyList = document.getElementById('historyList');
+  const historyEmpty = document.getElementById('historyEmpty');
+  const ppBtn = document.getElementById('ppBtn');
+  const tpBtn = document.getElementById('tpBtn');
+  const ppStakeLbl = document.getElementById('ppStakeLbl');
+  const tpStakeLbl = document.getElementById('tpStakeLbl');
+  const helpBtn = document.getElementById('helpBtn');
+  const tutoOverlay = document.getElementById('tutoOverlay');
+  const tutoContent = document.getElementById('tutoContent');
+  const tutoDots = document.getElementById('tutoDots');
+  const tutoPrevBtn = document.getElementById('tutoPrevBtn');
+  const tutoNextBtn = document.getElementById('tutoNextBtn');
+  const tutoSkipBtn = document.getElementById('tutoSkipBtn');
   const hiloOverlay = document.getElementById('hiloOverlay');
   const hiloCardZone = document.getElementById('hiloCardZone');
   const hiloPotEl = document.getElementById('hiloPot');
@@ -1027,7 +1119,8 @@
     const t = curTable();
     betAmtEl.textContent = bet;
     betRangeEl.textContent = `(min ${fmtNum(t.min)} – max ${fmtNum(t.max)})`;
-    dealBtn.disabled = !(bet >= t.min && bet <= t.max && bet <= bank);
+    updateSideBetLabels();
+    dealBtn.disabled = !(bet >= t.min && bet <= t.max && (bet + sideBetsCost()) <= bank);
     const rebetAmt = Math.min(lastBet, bank, t.max);
     rebetBtn.disabled = !(lastBet > 0 && rebetAmt >= t.min);
     const allInAmt = Math.min(bank, t.max);
@@ -1281,6 +1374,7 @@
       wheelMsg.textContent = `Vous gagnez ${reward} jetons !`;
       sfxWin();
       updateWheelUI();
+      bumpQuest('wheel', 1);
     }, 3300);
   });
 
@@ -1435,14 +1529,141 @@
           slotSpinBtn.disabled = true;
           slotClearBtn.disabled = false;
           slotSpinning = false;
+          bumpQuest('slot', 1);
         }
       }, 700 + i*400);
     });
   });
 
-  // ---------- succès (overlay) ----------
-  achBtn.addEventListener('click', () => { renderAchievements(); achOverlay.classList.add('show'); });
+  // ---------- progression (succès / quêtes / historique) ----------
+  function setProgTab(tab){
+    progTabAch.classList.toggle('active', tab==='ach');
+    progTabQuest.classList.toggle('active', tab==='quest');
+    progTabHist.classList.toggle('active', tab==='hist');
+    progPanelAch.classList.toggle('auth-hidden', tab!=='ach');
+    progPanelQuest.classList.toggle('auth-hidden', tab!=='quest');
+    progPanelHist.classList.toggle('auth-hidden', tab!=='hist');
+    if(tab==='quest') renderQuests();
+    if(tab==='hist') renderHistory();
+  }
+  progTabAch.addEventListener('click', ()=> setProgTab('ach'));
+  progTabQuest.addEventListener('click', ()=> setProgTab('quest'));
+  progTabHist.addEventListener('click', ()=> setProgTab('hist'));
+  achBtn.addEventListener('click', () => { renderAchievements(); setProgTab('ach'); achOverlay.classList.add('show'); });
   closeAchBtn.addEventListener('click', () => achOverlay.classList.remove('show'));
+
+  // ---------- quêtes journalières ----------
+  const QUEST_POOL = [
+    { type:'hands',    target:5,   label:n=>`Jouez ${n} mains`,                reward:40 },
+    { type:'wins',     target:3,   label:n=>`Gagnez ${n} mains`,               reward:60 },
+    { type:'blackjack',target:1,   label:n=>`Obtenez ${n} blackjack`,          reward:80 },
+    { type:'bigwin',   target:200, label:n=>`Gagnez ${n} jetons sur une main`, reward:70 },
+    { type:'wheel',    target:1,   label:n=>`Tournez la Roue de la Fortune`,   reward:30 },
+    { type:'slot',     target:1,   label:n=>`Jouez à la Machine à Sous`,       reward:30 },
+  ];
+  let dailyState = null;
+  function todayStr(){ return new Date().toISOString().slice(0,10); }
+  function ensureDailyQuests(){
+    const saved = safeGet('bj_daily', null);
+    if(saved && saved.date === todayStr()){
+      dailyState = saved;
+      return;
+    }
+    const pool = [...QUEST_POOL].sort(()=>Math.random()-0.5).slice(0,3);
+    dailyState = {
+      date: todayStr(),
+      quests: pool.map(q => ({ type:q.type, target:q.target, reward:q.reward, progress:0, claimed:false })),
+    };
+    saveDailyState();
+  }
+  function saveDailyState(){ safeSet('bj_daily', dailyState); }
+  function questDef(type){ return QUEST_POOL.find(q=>q.type===type); }
+  function bumpQuest(type, amount){
+    ensureDailyQuests();
+    let changed = false;
+    dailyState.quests.forEach(q => {
+      if(q.type===type && !q.claimed){
+        q.progress = Math.min(q.target, q.progress + amount);
+        changed = true;
+      }
+    });
+    if(changed){
+      saveDailyState();
+      dailyState.quests.forEach(q => {
+        if(!q.claimed && q.progress >= q.target){
+          q.claimed = true;
+          setBank(bank + q.reward, true);
+          showAchToast({ icon:'📜', name:`Quête accomplie : +${q.reward} jetons` });
+        }
+      });
+      saveDailyState();
+    }
+  }
+  function bumpQuestMax(type, value){
+    ensureDailyQuests();
+    let changed = false;
+    dailyState.quests.forEach(q => {
+      if(q.type===type && !q.claimed && value > q.progress){
+        q.progress = Math.min(q.target, value);
+        changed = true;
+      }
+    });
+    if(changed){
+      saveDailyState();
+      dailyState.quests.forEach(q => {
+        if(!q.claimed && q.progress >= q.target){
+          q.claimed = true;
+          setBank(bank + q.reward, true);
+          showAchToast({ icon:'📜', name:`Quête accomplie : +${q.reward} jetons` });
+        }
+      });
+      saveDailyState();
+    }
+  }
+  function renderQuests(){
+    ensureDailyQuests();
+    questList.innerHTML = '';
+    dailyState.quests.forEach(q => {
+      const def = questDef(q.type);
+      const row = document.createElement('div');
+      row.className = 'quest-item' + (q.claimed ? ' done' : '');
+      const pct = Math.min(100, Math.round(q.progress/q.target*100));
+      row.innerHTML = `
+        <div class="quest-name">${q.claimed ? '✅ ' : ''}${def.label(q.target)}</div>
+        <div class="quest-bar-wrap"><div class="quest-bar" style="width:${pct}%;"></div></div>
+        <div class="quest-reward">${q.progress}/${q.target} · récompense ${q.reward} jetons</div>
+      `;
+      questList.appendChild(row);
+    });
+  }
+
+  // ---------- historique des mains ----------
+  function pushHistory(entry){
+    const hist = safeGet('bj_history', []);
+    hist.unshift(entry);
+    while(hist.length > 30) hist.pop();
+    safeSet('bj_history', hist);
+  }
+  function cardStr(c){ return c.rank + c.suit; }
+  function renderHistory(){
+    const hist = safeGet('bj_history', []);
+    historyEmpty.style.display = hist.length ? 'none' : 'block';
+    historyList.innerHTML = '';
+    hist.forEach(h => {
+      const row = document.createElement('div');
+      row.className = 'history-item';
+      const cls = h.diff > 0 ? 'history-win' : (h.diff < 0 ? 'history-lose' : 'history-push');
+      const sign = h.diff > 0 ? '+' : '';
+      row.innerHTML = `
+        <div>
+          <div>${h.tag}</div>
+          <div class="h-cards">Vous: ${h.player} — Croupier: ${h.dealer}</div>
+        </div>
+        <div class="${cls}">${sign}${h.diff}</div>
+      `;
+      historyList.appendChild(row);
+    });
+  }
 
   soundBtn.addEventListener('click', () => {
     soundOn = !soundOn;
@@ -1470,8 +1691,143 @@
 
   dealBtn.addEventListener('click', startRound);
 
+  // ---------- mises annexes (Paire Parfaite / 21+3) ----------
+  let ppOn = false, tpOn = false;
+  function sideBetStake(){ return curTable().min; }
+  function sideBetsCost(){ return (ppOn?sideBetStake():0) + (tpOn?sideBetStake():0); }
+  function updateSideBetLabels(){
+    const stake = sideBetStake();
+    ppStakeLbl.textContent = `(${fmtNum(stake)})`;
+    tpStakeLbl.textContent = `(${fmtNum(stake)})`;
+    ppBtn.classList.toggle('active', ppOn);
+    tpBtn.classList.toggle('active', tpOn);
+  }
+  ppBtn.addEventListener('click', () => { if(state!=='betting') return; ppOn = !ppOn; updateSideBetLabels(); updateBetUI(); });
+  tpBtn.addEventListener('click', () => { if(state!=='betting') return; tpOn = !tpOn; updateSideBetLabels(); updateBetUI(); });
+
+  function evaluate21plus3(cards){
+    const order = {2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:10,J:11,Q:12,K:13,A:14};
+    const suits = cards.map(c=>c.suit);
+    const ranks = cards.map(c=>order[c.rank]);
+    const isFlush = suits[0]===suits[1] && suits[1]===suits[2];
+    const isTrips = ranks[0]===ranks[1] && ranks[1]===ranks[2];
+    const sorted = [...ranks].sort((a,b)=>a-b);
+    let isStraight = (sorted[1]===sorted[0]+1 && sorted[2]===sorted[1]+1);
+    if(!isStraight){
+      const low = ranks.map(r=> r===14?1:r).sort((a,b)=>a-b);
+      isStraight = (low[1]===low[0]+1 && low[2]===low[1]+1);
+    }
+    if(isFlush && isStraight) return { mult:40, label:'Quinte Flush' };
+    if(isTrips) return { mult:30, label:'Brelan' };
+    if(isStraight) return { mult:10, label:'Quinte' };
+    if(isFlush) return { mult:5, label:'Couleur' };
+    return { mult:0, label:'' };
+  }
+
+  function resolveSideBets(){
+    if(!ppOn && !tpOn) return;
+    const stake = sideBetStake();
+    const [c1, c2] = playerHands[0].cards;
+    const dUp = dealerHand[0];
+    if(ppOn && c1.rank === c2.rank){
+      const mult = (c1.color === c2.color) ? 12 : 6;
+      const win = stake*(mult+1);
+      setBank(bank + win, true);
+      showAchToast({ icon:'👥', name:`Paire Parfaite : +${win} jetons` });
+    }
+    if(tpOn){
+      const res = evaluate21plus3([c1, c2, dUp]);
+      if(res.mult > 0){
+        const win = stake*(res.mult+1);
+        setBank(bank + win, true);
+        showAchToast({ icon:'🎲', name:`21+3 (${res.label}) : +${win} jetons` });
+      }
+    }
+  }
+
+  // ---------- tutoriel ----------
+  const TUTO_SLIDES = [
+    {
+      icon:'🃏', title:'Bienvenue à la table !',
+      body:`<p>Le but du <b>Blackjack</b> : avoir une main plus proche de <b>21</b> que le croupier, sans la dépasser.</p>
+        <ul>
+          <li>Les figures (J, Q, K) valent <b>10</b></li>
+          <li>L'As vaut <b>11</b> ou <b>1</b> (au mieux pour vous)</li>
+          <li>Les autres cartes valent leur chiffre</li>
+        </ul>`
+    },
+    {
+      icon:'💰', title:'Miser et jouer',
+      body:`<p>Choisissez vos jetons pour composer votre mise, puis appuyez sur <b>Distribuer</b>.</p>
+        <p>À votre tour, plusieurs actions sont possibles :</p>
+        <ul>
+          <li><b>Tirer</b> : prendre une carte de plus</li>
+          <li><b>Rester</b> : garder votre main telle quelle</li>
+          <li><b>Doubler</b> : doubler la mise contre une seule carte de plus</li>
+          <li><b>Séparer</b> : si vos 2 cartes sont identiques, en faire 2 mains</li>
+        </ul>`
+    },
+    {
+      icon:'🏛️', title:'Les tables',
+      body:`<p>9 tables vous attendent, du plus petit budget au plus haut : <b>Débutant, Bronze, Argent, Or, Platine, Diamant, Rubis, Émeraude, Légende</b>.</p>
+        <p>Chaque table se débloque en atteignant un certain nombre de jetons en banque, et propose des mises et un décor différents.</p>`
+    },
+    {
+      icon:'🎲', title:'Mises annexes',
+      body:`<p>En plus de la mise principale, tentez :</p>
+        <ul>
+          <li><b>Paire Parfaite</b> : vos 2 premières cartes forment une paire</li>
+          <li><b>21+3</b> : vos 2 cartes + la carte visible du croupier forment une combinaison (couleur, quinte, brelan...)</li>
+        </ul>
+        <p>Ce sont des mises optionnelles, à activer avant de distribuer.</p>`
+    },
+    {
+      icon:'🎰', title:'Mini-jeux',
+      body:`<p>Le bouton 🎰 ouvre d'autres façons de gagner des jetons :</p>
+        <ul>
+          <li><b>Roue de la Fortune</b> — gratuite, toutes les 3 minutes</li>
+          <li><b>Pile ou Face</b> — misez pour doubler</li>
+          <li><b>Plus haut / Plus bas</b> — devinez la prochaine carte</li>
+          <li><b>Machine à Sous</b> — alignez 3 symboles</li>
+        </ul>`
+    },
+    {
+      icon:'🏆', title:'Progression',
+      body:`<p>Le bouton 🏆 regroupe :</p>
+        <ul>
+          <li><b>Succès</b> à débloquer en jouant</li>
+          <li><b>Quêtes du jour</b>, renouvelées chaque jour, avec récompense en jetons</li>
+          <li><b>Historique</b> de vos dernières mains</li>
+        </ul>`
+    },
+    {
+      icon:'👤', title:'Sauvegardez votre progression',
+      body:`<p>Créez un compte (bouton 👤) pour ne jamais perdre votre banque, vos stats et vos succès — même en changeant d'appareil.</p>
+        <p>Vous êtes prêt(e). Bonne chance à la table !</p>`
+    },
+  ];
+  let tutoIdx = 0;
+
+  function renderTuto(){
+    const s = TUTO_SLIDES[tutoIdx];
+    tutoContent.innerHTML = `<div class="tuto-icon">${s.icon}</div><div class="tuto-title">${s.title}</div><div class="tuto-body">${s.body}</div>`;
+    tutoDots.innerHTML = TUTO_SLIDES.map((_,i)=>`<div class="tuto-dot${i===tutoIdx?' active':''}"></div>`).join('');
+    tutoPrevBtn.style.visibility = tutoIdx===0 ? 'hidden' : 'visible';
+    tutoNextBtn.textContent = tutoIdx === TUTO_SLIDES.length-1 ? 'Compris, jouons !' : 'Suivant';
+  }
+  function openTuto(){ tutoIdx = 0; renderTuto(); tutoOverlay.classList.add('show'); }
+  function closeTuto(){ tutoOverlay.classList.remove('show'); safeSet('bj_tuto_seen', true); }
+  tutoNextBtn.addEventListener('click', () => {
+    if(tutoIdx === TUTO_SLIDES.length-1){ closeTuto(); return; }
+    tutoIdx++; renderTuto();
+  });
+  tutoPrevBtn.addEventListener('click', () => { if(tutoIdx>0){ tutoIdx--; renderTuto(); } });
+  tutoSkipBtn.addEventListener('click', closeTuto);
+  helpBtn.addEventListener('click', openTuto);
+
   function startRound(){
-    if(bet<=0 || bet>bank) return;
+    const totalStake = bet + sideBetsCost();
+    if(bet<=0 || totalStake>bank) return;
     ensureAudio();
     lastBet = bet;
     state = 'playerTurn';
@@ -1481,12 +1837,13 @@
     dealerHand = [deck.pop(), deck.pop()];
     dealerHoleHidden = true;
     insuranceBet = 0;
-    setBank(bank - bet);
+    setBank(bank - totalStake);
     sfxCard();
     setMsg('');
     renderAll();
     betZoneEl.style.display = 'none';
     actionsEl.innerHTML = '';
+    resolveSideBets();
 
     if(dealerHand[0].rank === 'A' && bank >= Math.floor(bet/2)){
       insAmt.textContent = Math.floor(bet/2);
@@ -1661,6 +2018,8 @@
     let totalPayout = 0;
     let msgs = [];
     let anyWin = false, anyLose = false, anyPush = false;
+    let winsCount = 0, bjCount = 0, roundBestDiff = -Infinity;
+    const dealerStr = dealerHand.map(cardStr).join(' ');
 
     playerHands.forEach((h, idx) => {
       const pVal = handValue(h.cards);
@@ -1670,11 +2029,11 @@
       if(pVal > 21){
         tag = 'Perdu'; payout = 0; stats.losses++; anyLose = true;
       } else if(pBJ && !dBJ){
-        tag = 'Blackjack !'; payout = Math.floor(h.bet*2.5); stats.wins++; stats.blackjacks++; anyWin = true;
+        tag = 'Blackjack !'; payout = Math.floor(h.bet*2.5); stats.wins++; stats.blackjacks++; anyWin = true; winsCount++; bjCount++;
       } else if(dBJ && !pBJ){
         tag = 'Perdu'; payout = 0; stats.losses++; anyLose = true;
       } else if(dVal > 21 || pVal > dVal){
-        tag = 'Gagné'; payout = h.bet*2; stats.wins++; anyWin = true;
+        tag = 'Gagné'; payout = h.bet*2; stats.wins++; anyWin = true; winsCount++;
       } else if(pVal < dVal){
         tag = 'Perdu'; payout = 0; stats.losses++; anyLose = true;
       } else {
@@ -1685,6 +2044,8 @@
       const diff = payout - h.bet;
       msgs.push(`${label}${tag}${diff>0?' +'+diff:''}`);
       if(diff > stats.bestWin) stats.bestWin = diff;
+      if(diff > roundBestDiff) roundBestDiff = diff;
+      pushHistory({ tag, diff, player: h.cards.map(cardStr).join(' '), dealer: dealerStr });
     });
 
     if(anyWin && !anyLose){ stats.streak++; if(stats.streak>stats.bestStreak) stats.bestStreak = stats.streak; }
@@ -1692,6 +2053,11 @@
     saveStats();
 
     setBank(bank + totalPayout, totalPayout>0);
+
+    bumpQuest('hands', playerHands.length);
+    if(winsCount > 0) bumpQuest('wins', winsCount);
+    if(bjCount > 0) bumpQuest('blackjack', bjCount);
+    if(roundBestDiff > 0) bumpQuestMax('bigwin', roundBestDiff);
 
     let cls = anyWin && !anyLose ? 'win' : (anyLose && !anyWin ? 'lose' : 'push');
     setMsg(msgs.join('  •  '), cls);
@@ -1734,6 +2100,7 @@
   renderChips();
   renderTableLabel();
   updateBetUI();
+  if(!safeGet('bj_tuto_seen', false)) openTuto();
 })();
 </script>
 </body>
