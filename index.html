@@ -435,6 +435,7 @@
           <div class="icon-btn" id="soundBtn"><span id="soundIcon">🔊</span> <span>Son</span></div>
           <div class="icon-btn" id="statsBtn">📊 <span>Statistiques</span></div>
           <div class="icon-btn" id="achBtn" title="Progression">🏆 <span>Progression</span></div>
+          <div class="icon-btn" id="shopBtn" title="Boutique de cartes">🎴 <span>Boutique</span></div>
           <div class="icon-btn" id="gamesMenuBtn">🎰 <span>Mini-jeux</span></div>
           <div class="icon-btn" id="accountBtn" title="Mon compte"><span id="accountIcon">👤</span> <span>Mon compte</span></div>
           <div class="icon-btn" id="helpBtn" title="Comment jouer">❓ <span>Comment jouer</span></div>
@@ -497,7 +498,7 @@
       <div style="display:flex; flex-direction:column; gap:10px;">
         <button class="btn-secondary" id="openWheelBtn" style="text-align:left; padding:14px 16px;">🎡 Roue de la Fortune <span style="opacity:.6; font-size:11px; display:block;">Gratuit, une fois toutes les 3 min</span></button>
         <button class="btn-secondary" id="openCoinBtn" style="text-align:left; padding:14px 16px;">🪙 Pile ou Face <span style="opacity:.6; font-size:11px; display:block;">Misez pour doubler (ou tout perdre)</span></button>
-        <button class="btn-secondary" id="openHiloBtn2" style="text-align:left; padding:14px 16px;">🃏 Plus haut / Plus bas <span style="opacity:.6; font-size:11px; display:block;">Gratuit, cagnotte à risque</span></button>
+        <button class="btn-secondary" id="openHiloBtn2" style="text-align:left; padding:14px 16px;">🃏 Plus haut / Plus bas <span style="opacity:.6; font-size:11px; display:block;" id="hiloBtn2Hint">Gratuit, cagnotte à risque</span></button>
         <button class="btn-secondary" id="openSlotBtn" style="text-align:left; padding:14px 16px;">🎰 Machine à Sous <span style="opacity:.6; font-size:11px; display:block;">Alignez 3 symboles pour un gros gain</span></button>
       </div>
       <div class="overlay-actions" style="margin-top:14px;">
@@ -584,7 +585,7 @@
       <h3>Progression</h3>
       <div class="auth-tabs" id="progTabs">
         <div class="auth-tab active" id="progTabAch">Succès</div>
-        <div class="auth-tab" id="progTabLevel">Niveau</div>
+        <div class="auth-tab" id="progTabLevel">🎴 Boutique</div>
         <div class="auth-tab" id="progTabQuest">Quêtes</div>
         <div class="auth-tab" id="progTabHist">Historique</div>
       </div>
@@ -601,7 +602,7 @@
           <div class="quest-bar-wrap"><div class="quest-bar" id="lhBar" style="width:0%;"></div></div>
           <div class="lh-xp" id="lhXp">0 / 120 XP</div>
         </div>
-        <p style="font-size:11.5px; color:rgba(242,234,214,.6); margin:0 0 10px;">Gagnez de l'XP en jouant des mains, en réussissant des quêtes et des succès. Chaque palier débloque un nouveau look — ou achetez-le directement avec vos jetons.</p>
+        <p style="font-size:11.5px; color:rgba(242,234,214,.6); margin:0 0 10px;">Achetez un nouveau design de cartes (dos + jetons assortis) directement avec vos jetons — ou débloquez-le gratuitement en montant de niveau.</p>
         <div class="tier-list" id="tierList"></div>
       </div>
 
@@ -1000,6 +1001,12 @@
     });
   }
 
+  const dailyOverlay = document.getElementById('dailyOverlay');
+  const dailyStreakLine = document.getElementById('dailyStreakLine');
+  const dailyDots = document.getElementById('dailyDots');
+  const dailyRewardLine = document.getElementById('dailyRewardLine');
+  const dailyClaimBtn = document.getElementById('dailyClaimBtn');
+
   function isRuined(){ return bank < TABLES[0].min; }
 
   function checkDailyLogin(){
@@ -1018,8 +1025,21 @@
     dailyDots.innerHTML = DAILY_REWARDS.map((r,i)=>`<div class="tuto-dot${i===dayIndex?' active':(i<dayIndex?' done':'')}"></div>`).join('');
     dailyRewardLine.textContent = `+${fmtNum(DAILY_REWARDS[dayIndex])} jetons · +${DAILY_XP[dayIndex]} XP`;
     dailyClaimBtn.dataset.day = dayIndex;
+    dailyClaimBtn.disabled = false;
+    dailyClaimBtn.dataset.claimed = '';
     dailyOverlay.classList.add('show');
   }
+  dailyClaimBtn.addEventListener('click', () => {
+    // Empêche un double-clic (ou double événement tactile) de faire encaisser la récompense deux fois
+    if(dailyClaimBtn.disabled || dailyClaimBtn.dataset.claimed==='1') return;
+    dailyClaimBtn.disabled = true;
+    dailyClaimBtn.dataset.claimed = '1';
+    const dayIndex = Number(dailyClaimBtn.dataset.day || 0);
+    setBank(bank + DAILY_REWARDS[dayIndex], true);
+    addXp(DAILY_XP[dayIndex]);
+    checkAchievements();
+    dailyOverlay.classList.remove('show');
+  });
   function adjustTable(){
     while(currentTableIdx > 0 && bank < TABLES[currentTableIdx].min){ currentTableIdx--; }
     if(isRuined()) currentTableIdx = 0;
@@ -1064,6 +1084,7 @@
   const resetRow = document.getElementById('resetRow');
   const openHiloBtn = document.getElementById('openHiloBtn');
   const openHiloBtn2 = document.getElementById('openHiloBtn2');
+  const hiloBtn2Hint = document.getElementById('hiloBtn2Hint');
   const gamesMenuBtn = document.getElementById('gamesMenuBtn');
   const gamesMenuOverlay = document.getElementById('gamesMenuOverlay');
   const gamesMenuMsg = document.getElementById('gamesMenuMsg');
@@ -1093,6 +1114,7 @@
   const slotMsg = document.getElementById('slotMsg');
   const slotReels = [document.getElementById('slotR0'), document.getElementById('slotR1'), document.getElementById('slotR2')];
   const achBtn = document.getElementById('achBtn');
+  const shopBtn = document.getElementById('shopBtn');
   const achOverlay = document.getElementById('achOverlay');
   const achList = document.getElementById('achList');
   const achProgress = document.getElementById('achProgress');
@@ -1138,18 +1160,6 @@
   const soundBtn = document.getElementById('soundBtn');
   const soundIcon = document.getElementById('soundIcon');
   const statsBtn = document.getElementById('statsBtn');
-  const dailyOverlay = document.getElementById('dailyOverlay');
-  const dailyStreakLine = document.getElementById('dailyStreakLine');
-  const dailyDots = document.getElementById('dailyDots');
-  const dailyRewardLine = document.getElementById('dailyRewardLine');
-  const dailyClaimBtn = document.getElementById('dailyClaimBtn');
-  dailyClaimBtn.addEventListener('click', () => {
-    const dayIndex = Number(dailyClaimBtn.dataset.day || 0);
-    setBank(bank + DAILY_REWARDS[dayIndex], true);
-    addXp(DAILY_XP[dayIndex]);
-    checkAchievements();
-    dailyOverlay.classList.remove('show');
-  });
   const statsOverlay = document.getElementById('statsOverlay');
   const closeStatsBtn = document.getElementById('closeStatsBtn');
 
@@ -1613,7 +1623,9 @@
   });
 
   // ---------- menu des mini-jeux ----------
+  const HILO_UNLOCK_THRESHOLD = 500; // Plus haut/Plus bas n'est accessible qu'en dessous de ce montant
   function openGamesMenu(){
+    const hiloAllowed = bank < HILO_UNLOCK_THRESHOLD;
     gamesMenuMsg.textContent = isRuined()
       ? 'Vous êtes ruiné — la Roue et Plus haut/Plus bas sont gratuits.'
       : "D'autres façons de faire fructifier — ou de regagner — vos jetons.";
@@ -1621,6 +1633,11 @@
     openCoinBtn.style.opacity = bank <= 0 ? .4 : 1;
     openSlotBtn.disabled = bank <= 0;
     openSlotBtn.style.opacity = bank <= 0 ? .4 : 1;
+    openHiloBtn2.disabled = !hiloAllowed;
+    openHiloBtn2.style.opacity = hiloAllowed ? 1 : .4;
+    hiloBtn2Hint.textContent = hiloAllowed
+      ? 'Gratuit, cagnotte à risque'
+      : `Accessible sous ${fmtNum(HILO_UNLOCK_THRESHOLD)} jetons`;
     gamesMenuOverlay.classList.add('show');
   }
   gamesMenuBtn.addEventListener('click', openGamesMenu);
@@ -1640,7 +1657,10 @@
   });
   closeGamesMenuBtn.addEventListener('click', () => gamesMenuOverlay.classList.remove('show'));
   openHiloBtn.addEventListener('click', () => { gamesMenuOverlay.classList.remove('show'); openHilo(); });
-  openHiloBtn2.addEventListener('click', () => { gamesMenuOverlay.classList.remove('show'); openHilo(); });
+  openHiloBtn2.addEventListener('click', () => {
+    if(bank >= HILO_UNLOCK_THRESHOLD) return; // sécurité en plus de l'attribut disabled
+    gamesMenuOverlay.classList.remove('show'); openHilo();
+  });
   openWheelBtn.addEventListener('click', () => { gamesMenuOverlay.classList.remove('show'); openWheel(); });
   openCoinBtn.addEventListener('click', () => { if(bank<=0) return; gamesMenuOverlay.classList.remove('show'); openCoin(); });
 
@@ -1877,6 +1897,7 @@
   achBtn.addEventListener('click', () => { renderAchievements(); setProgTab('ach'); achOverlay.classList.add('show'); });
   closeAchBtn.addEventListener('click', () => achOverlay.classList.remove('show'));
   levelBadge.addEventListener('click', () => { renderAchievements(); setProgTab('level'); achOverlay.classList.add('show'); });
+  shopBtn.addEventListener('click', () => { setProgTab('level'); achOverlay.classList.add('show'); });
 
   // ---------- quêtes journalières ----------
   const QUEST_POOL = [
@@ -2145,7 +2166,7 @@
     tutoNextBtn.textContent = tutoIdx === TUTO_SLIDES.length-1 ? 'Compris, jouons !' : 'Suivant';
   }
   function openTuto(){ tutoIdx = 0; renderTuto(); tutoOverlay.classList.add('show'); }
-  function closeTuto(){ tutoOverlay.classList.remove('show'); safeSet('bj_tuto_seen', true); }
+  function closeTuto(){ tutoOverlay.classList.remove('show'); safeSet('bj_tuto_seen', true); checkDailyLogin(); }
   tutoNextBtn.addEventListener('click', () => {
     if(tutoIdx === TUTO_SLIDES.length-1){ closeTuto(); return; }
     tutoIdx++; renderTuto();
